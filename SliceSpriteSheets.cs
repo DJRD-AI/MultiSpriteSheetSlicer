@@ -17,20 +17,6 @@ public class SliceSpriteSheets : EditorWindow
         Pixels
     }
 
-    private string[] pivotPresets = new string[]
-    {
-        "Center",
-        "Top",
-        "Top Left",
-        "Top Right",
-        "Left",
-        "Right",
-        "Bottom",
-        "Bottom Left",
-        "Bottom Right",
-        "Custom"
-    };
-
     private SliceMode sliceMode = SliceMode.CellCount;
     private int cellsPerRow = 4;
     private int cellsPerColumn = 4;
@@ -47,7 +33,8 @@ public class SliceSpriteSheets : EditorWindow
     private Vector2 scrollPosition;
     private List<Texture2D> selectedSpriteSheets = new List<Texture2D>();
 
-    private int selectedPivotPreset = 0;
+    //Allignments defined by unity
+    private SpriteAlignment SelectedPreset = SpriteAlignment.Center;
 
     [MenuItem("Tools/Slice Sprite Sheets")]
     public static void ShowWindow()
@@ -89,42 +76,10 @@ public class SliceSpriteSheets : EditorWindow
 
         GUILayout.Label("Pivot Options", EditorStyles.boldLabel);
 
-        selectedPivotPreset = EditorGUILayout.Popup("Pivot Preset", selectedPivotPreset, pivotPresets);
+        // selectedPivotPreset = EditorGUILayout.Popup("Pivot Preset", selectedPivotPreset, pivotPresets);
+        SelectedPreset = (SpriteAlignment)EditorGUILayout.EnumPopup("Pivot Preset", SelectedPreset);
 
-        switch (pivotPresets[selectedPivotPreset])
-        {
-            case "Center":
-                pivotPosition = new Vector2(0.5f, 0.5f);
-                break;
-            case "Top":
-                pivotPosition = new Vector2(0.5f, 1f);
-                break;
-            case "Top Left":
-                pivotPosition = new Vector2(0f, 1f);
-                break;
-            case "Top Right":
-                pivotPosition = new Vector2(1f, 1f);
-                break;
-            case "Left":
-                pivotPosition = new Vector2(0f, 0.5f);
-                break;
-            case "Right":
-                pivotPosition = new Vector2(1f, 0.5f);
-                break;
-            case "Bottom":
-                pivotPosition = new Vector2(0.5f, 0f);
-                break;
-            case "Bottom Left":
-                pivotPosition = new Vector2(0f, 0f);
-                break;
-            case "Bottom Right":
-                pivotPosition = new Vector2(1f, 0f);
-                break;
-            case "Custom":
-                // Allow custom pivot position input
-                pivotPosition = EditorGUILayout.Vector2Field("Custom Pivot", pivotPosition);
-                break;
-        }
+        pivotPosition = GetPivotPosition(SelectedPreset);
 
         pivotUnitMode = (PivotUnitMode)EditorGUILayout.EnumPopup("Pivot Unit Mode", pivotUnitMode);
 
@@ -156,6 +111,17 @@ public class SliceSpriteSheets : EditorWindow
             GUILayout.EndHorizontal();
         }
         GUILayout.EndScrollView();
+    }
+    
+    private Vector2 GetPivotPosition(SpriteAlignment pivot)
+    {
+        if(pivot == SpriteAlignment.Custom)
+            return EditorGUILayout.Vector2Field("Custom Pivot", pivotPosition);
+        //bottom -> 0, center -> 0.5, top -> 1
+        float height = 1.0f - (int)pivot / 3 * 0.5f;
+        //left -> 0, center -> 0.5, right -> 1
+        float width = (int)pivot % 3 * 0.5f;
+        return new Vector2(width,height);
     }
     private void UpdateAutoRefresh()
     {
@@ -244,16 +210,10 @@ public class SliceSpriteSheets : EditorWindow
                         SpriteMetaData smd = new SpriteMetaData();
                         smd.rect = new Rect(j * spritePixelsPerUnitX, i * spritePixelsPerUnitY, spritePixelsPerUnitX, spritePixelsPerUnitY);
                         smd.name = string.Format("{0}_{1}", Path.GetFileNameWithoutExtension(assetPath), (i * spritesPerRow) + j);
-
-                        if (selectedPivotPreset == pivotPresets.Length - 1) // Custom preset
-                        {
-                            smd.alignment = (int)SpriteAlignment.Custom;
-                            smd.pivot = pivotPosition;
-                        }
-                        else
-                        {
-                            smd.alignment = (int)GetPivotAlignment(selectedPivotPreset);
-                        }
+                        
+                        smd.alignment = (int)SelectedPreset;
+                        if (SelectedPreset == SpriteAlignment.Custom)
+                            smd.pivot = pivotPosition; 
 
                         smd.border = new Vector4(0, 0, 0, 0);
 
@@ -276,32 +236,5 @@ public class SliceSpriteSheets : EditorWindow
 
         AssetDatabase.Refresh();
         RefreshSelectedSpriteSheets();
-    }
-
-    private SpriteAlignment GetPivotAlignment(int presetIndex)
-    {
-        switch (presetIndex)
-        {
-            case 0: // Center
-                return SpriteAlignment.Center;
-            case 1: // Top
-                return SpriteAlignment.TopCenter;
-            case 2: // Top Left
-                return SpriteAlignment.TopLeft;
-            case 3: // Top Right
-                return SpriteAlignment.TopRight;
-            case 4: // Left
-                return SpriteAlignment.LeftCenter;
-            case 5: // Right
-                return SpriteAlignment.RightCenter;
-            case 6: // Bottom
-                return SpriteAlignment.BottomCenter;
-            case 7: // Bottom Left
-                return SpriteAlignment.BottomLeft;
-            case 8: // Bottom Right
-                return SpriteAlignment.BottomRight;
-            default:
-                return SpriteAlignment.Center;
-        }
     }
 }
