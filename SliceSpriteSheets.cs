@@ -3,7 +3,7 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using System;
-
+#if UNITY_EDITOR
 public class SliceSpriteSheets : EditorWindow
 {
     private const float SPACER = 10.0f;
@@ -54,7 +54,8 @@ public class SliceSpriteSheets : EditorWindow
     {
         Selection.selectionChanged -= Repaint;
     }
-    private void OnDestroy() {
+    private void OnDestroy() 
+    {
         Selection.selectionChanged -= Repaint;
     }
 
@@ -95,7 +96,8 @@ public class SliceSpriteSheets : EditorWindow
 
         sliceMode = (SliceMode)EditorGUILayout.EnumPopup("Slice Mode", sliceMode);
 
-        if (sliceMode == SliceMode.CellCount){
+        if (sliceMode == SliceMode.CellCount)
+        {
             ColCount = EditorGUILayout.IntField("Cells Per Row", ColCount);
             RowCount = EditorGUILayout.IntField("Cells Per Column", RowCount);
             return;
@@ -177,17 +179,20 @@ public class SliceSpriteSheets : EditorWindow
     }
     private void SliceSelectedSpriteSheets()
     {
-        Action<Texture2D> sliceFunc = sliceMode switch{
+        Action<Texture2D> sliceFunc = sliceMode switch
+        {
             SliceMode.CellCount => (spritesheet) => SliceByCell(spritesheet, RowCount, ColCount, SelectedPivot, pivotPosition),
             SliceMode.CellSize => (spritesheet) => SliceBySize(spritesheet, cellHeight, cellWidth, SelectedPivot, pivotPosition),
             _ => null
         };
-        if(sliceFunc == null){
+        if(sliceFunc == null)
+        {
             Debug.LogError($"Undefined slice mode given {sliceMode}");
             return;
         }
 
-        foreach (Texture2D spritesheet in selectedSpriteSheets){
+        foreach (Texture2D spritesheet in selectedSpriteSheets)
+        {
             sliceFunc(spritesheet);
         }
 
@@ -210,12 +215,6 @@ public class SliceSpriteSheets : EditorWindow
         importer.spritesheet = SpriteSlicer(spriteSheet,rows,collums,Height,Width,assetPath,alignment,pivot).ToArray();
         importer.spriteImportMode = SpriteImportMode.Multiple;
 
-        float originalPixelsPerUnit = importer.spritePixelsPerUnit;
-        importer.spritePixelsPerUnit = 1;
-
-        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
-
-        importer.spritePixelsPerUnit = originalPixelsPerUnit;
         AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
     }
 
@@ -265,5 +264,4 @@ public class SliceSpriteSheets : EditorWindow
         return spriteData;
     }
 }
-
-
+#endif
